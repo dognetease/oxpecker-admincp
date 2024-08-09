@@ -1,0 +1,34 @@
+image: node:18-bullseye
+
+stages:
+  - package
+
+package_job1:
+  stage: package
+  tags:
+    - nodejs
+  script:
+    - npm i
+    - npm run build:test
+    - mkdir dist/nginx-conf
+    - cp -r main.conf dist/nginx-conf/
+    - tar cvf web.tar -C dist .
+    - curl -XPOST --fail -F "file=@web.tar" "http://artifact.lx-i.netease.com/api/pub/artifact/upload?appCode=$CI_PROJECT_NAME&commitSha=$CI_COMMIT_SHA&commitUser=$GITLAB_USER_EMAIL&env=test"
+  except:
+    - master
+
+
+
+package_job2:
+  stage: package
+  tags:
+    - nodejs
+  script:
+    - npm i
+    - npm run build
+    - mkdir dist/nginx-conf
+    - cp -r main.conf dist/nginx-conf/
+    - tar cvf web.tar -C dist .
+    - curl -XPOST --fail -F "file=@web.tar" "http://artifact.lx-i.netease.com/api/pub/artifact/upload?appCode=$CI_PROJECT_NAME&commitSha=$CI_COMMIT_SHA&commitUser=$GITLAB_USER_EMAIL&env=online"
+  only:
+    - master
